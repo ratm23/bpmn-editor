@@ -15,7 +15,7 @@
       font-family: sans-serif;
     }
     #canvas {
-      height: 75vh;
+      height: 90vh;
       border: 1px solid #ccc;
     }
     #buttons {
@@ -58,27 +58,46 @@
   <script>
     const bpmnModeler = new BpmnJS({ container: '#canvas' });
 
-    const defaultDiagram = `<?xml version="1.0" encoding="UTF-8"?>
-    <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                      xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                      xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-                      xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-                      xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-                      id="Definitions_1"
-                      targetNamespace="http://bpmn.io/schema/bpmn">
-      <bpmn:process id="Process_1" isExecutable="false">
-        <bpmn:startEvent id="StartEvent_1"/>
-      </bpmn:process>
-      <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-          <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-            <dc:Bounds x="100" y="100" width="36" height="36"/>
-          </bpmndi:BPMNShape>
-        </bpmndi:BPMNPlane>
-      </bpmndi:BPMNDiagram>
-    </bpmn:definitions>`;
+    async function loadDiagramFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const diagramName = urlParams.get('diagram');
 
-    bpmnModeler.importXML(defaultDiagram);
+      if (diagramName) {
+        try {
+          const response = await fetch(`./diagrams/${diagramName}.bpmn`);
+          const xml = await response.text();
+          await bpmnModeler.importXML(xml);
+          return;
+        } catch (e) {
+          console.error('Diagram loading error:', e);
+        }
+      }
+
+      // fallback – default diagram
+      const defaultDiagram = `<?xml version="1.0" encoding="UTF-8"?>
+      <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                        xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                        xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                        xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                        id="Definitions_1"
+                        targetNamespace="http://bpmn.io/schema/bpmn">
+        <bpmn:process id="Process_1" isExecutable="false">
+          <bpmn:startEvent id="StartEvent_1"/>
+        </bpmn:process>
+        <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+          <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+            <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+              <dc:Bounds x="100" y="100" width="36" height="36"/>
+            </bpmndi:BPMNShape>
+          </bpmndi:BPMNPlane>
+        </bpmndi:BPMNDiagram>
+      </bpmn:definitions>`;
+
+      await bpmnModeler.importXML(defaultDiagram);
+    }
+
+    loadDiagramFromURL();
 
     document.getElementById('downloadBtn').addEventListener('click', async () => {
       try {
@@ -101,7 +120,6 @@
         const elementRegistry = bpmnModeler.get('elementRegistry');
         const allElements = elementRegistry.getAll();
 
-        // Przykładowa walidacja: każdy Task musi mieć nazwę max 5 znaków
         const invalidTasks = allElements.filter(el => {
           return el.type === 'bpmn:Task' && el.businessObject.name && el.businessObject.name.length > 5;
         });
@@ -114,7 +132,6 @@
           return;
         }
 
-        // Submit (tu tylko symulacja)
         document.getElementById('submitStatus').textContent = '✅ Diagram submitted successfully!';
         document.getElementById('submitStatus').style.color = 'green';
 
