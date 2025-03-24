@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>BPMN Editor MVP</title>
-
-<link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/diagram-js.css"/>
-<link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/bpmn-js.css"/>
-<link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/bpmn-font/css/bpmn.css"/>
-  
   <script src="https://unpkg.com/bpmn-js@13.0.3/dist/bpmn-modeler.development.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/diagram-js.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/bpmn-js.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/bpmn-font/css/bpmn.css" />
   <style>
     html, body {
       height: 100%;
@@ -24,16 +22,37 @@
       padding: 10px;
       background: #f7f7f7;
       border-top: 1px solid #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     button {
       margin-right: 10px;
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #submitStatus {
+      font-size: 14px;
+      color: green;
     }
   </style>
 </head>
 <body>
   <div id="canvas"></div>
   <div id="buttons">
-    <button id="downloadBtn">Pobierz jako .bpmn</button>
+    <div>
+      <button id="downloadBtn">Download as .bpmn</button>
+      <button id="submitBtn">Submit</button>
+    </div>
+    <div id="submitStatus"></div>
   </div>
 
   <script>
@@ -72,7 +91,37 @@
         a.click();
         URL.revokeObjectURL(url);
       } catch (err) {
-        console.error('Błąd podczas eksportowania BPMN', err);
+        console.error('Export error:', err);
+      }
+    });
+
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      try {
+        const { xml } = await bpmnModeler.saveXML({ format: true });
+        const elementRegistry = bpmnModeler.get('elementRegistry');
+        const allElements = elementRegistry.getAll();
+
+        // Przykładowa walidacja: każdy Task musi mieć nazwę max 5 znaków
+        const invalidTasks = allElements.filter(el => {
+          return el.type === 'bpmn:Task' && el.businessObject.name && el.businessObject.name.length > 5;
+        });
+
+        if (invalidTasks.length > 0) {
+          const names = invalidTasks.map(t => t.businessObject.name).join(', ');
+          document.getElementById('submitStatus').textContent =
+            `❌ Validation failed: Task name(s) too long (${names})`;
+          document.getElementById('submitStatus').style.color = 'red';
+          return;
+        }
+
+        // Submit (tu tylko symulacja)
+        document.getElementById('submitStatus').textContent = '✅ Diagram submitted successfully!';
+        document.getElementById('submitStatus').style.color = 'green';
+
+      } catch (err) {
+        console.error('Submit error:', err);
+        document.getElementById('submitStatus').textContent = '❌ Submission failed. Please try again.';
+        document.getElementById('submitStatus').style.color = 'red';
       }
     });
   </script>
