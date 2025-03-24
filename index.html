@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BPMN Editor MVP</title>
+  <script src="https://unpkg.com/bpmn-js@13.0.3/dist/bpmn-modeler.development.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+    }
+    #canvas {
+      height: 90vh;
+      border: 1px solid #ccc;
+    }
+    #buttons {
+      padding: 10px;
+      background: #f7f7f7;
+      border-top: 1px solid #ccc;
+    }
+    button {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas"></div>
+  <div id="buttons">
+    <button id="downloadBtn">Pobierz jako .bpmn</button>
+  </div>
+
+  <script>
+    const bpmnModeler = new BpmnJS({ container: '#canvas' });
+
+    const defaultDiagram = `<?xml version="1.0" encoding="UTF-8"?>
+    <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                      xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                      xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                      xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                      id="Definitions_1"
+                      targetNamespace="http://bpmn.io/schema/bpmn">
+      <bpmn:process id="Process_1" isExecutable="false">
+        <bpmn:startEvent id="StartEvent_1"/>
+      </bpmn:process>
+      <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+          <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+            <dc:Bounds x="100" y="100" width="36" height="36"/>
+          </bpmndi:BPMNShape>
+        </bpmndi:BPMNPlane>
+      </bpmndi:BPMNDiagram>
+    </bpmn:definitions>`;
+
+    bpmnModeler.importXML(defaultDiagram);
+
+    document.getElementById('downloadBtn').addEventListener('click', async () => {
+      try {
+        const { xml } = await bpmnModeler.saveXML({ format: true });
+        const blob = new Blob([xml], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'diagram.bpmn';
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('Błąd podczas eksportowania BPMN', err);
+      }
+    });
+  </script>
+</body>
+</html>
