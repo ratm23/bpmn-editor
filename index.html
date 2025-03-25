@@ -51,59 +51,16 @@
     <div>
       <button id="downloadBtn">Download as .bpmn</button>
       <button id="submitBtn">Submit</button>
-      <button id="addMultipleStartEvent">+ Start (Multiple)</button>
+      
     </div>
     <div id="submitStatus"></div>
   </div>
 
   <script>
-    class CustomRenderer {
-      constructor(eventBus, styles, pathMap, canvas, textRenderer) {
-        this.eventBus = eventBus;
-        this.styles = styles;
-        this.pathMap = pathMap;
-        this.canvas = canvas;
-        this.textRenderer = textRenderer;
+    
 
-        this.EVENT_COLOR = '#ffa500';
-
-        eventBus.on('bpmnRenderer.drawShape', ({ element, gfx }) => {
-          if (element.type === 'bpmn:StartEvent' && isMultipleEvent(element)) {
-            const ns = 'http://www.w3.org/2000/svg';
-            const circle = document.createElementNS(ns, 'circle');
-            circle.setAttribute('cx', '18');
-            circle.setAttribute('cy', '18');
-            circle.setAttribute('r', '6');
-            circle.setAttribute('fill', this.EVENT_COLOR);
-            circle.setAttribute('stroke', '#000');
-            circle.setAttribute('stroke-width', '1');
-
-            gfx.appendChild(circle);
-          }
-        });
-      }
-    }
-          }
-        });
-      }
-    }
-
-    CustomRenderer.$inject = ['eventBus', 'styles', 'pathMap', 'canvas', 'textRenderer'];
-
-    function isMultipleEvent(element) {
-      const defs = element.businessObject.eventDefinitions || [];
-      return defs.some(def => def.$type === 'bpmn:MultipleEventDefinition');
-    }
-    const bpmnModeler = new BpmnJS({
-  container: '#canvas',
-  additionalModules: [
-    {
-      __init__: ['customRenderer'],
-      customRenderer: ['type', CustomRenderer]
-    },
-    window.BpmnJS?._modules?.[0] || {}
-  ].filter(Boolean)
-});
+    
+    const bpmnModeler = new BpmnJS({ container: '#canvas' });
 
     async function loadDiagramFromURL() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -188,8 +145,7 @@
       }
     });
 
-    document.getElementById('addMultipleStartEvent').addEventListener('click', () => {
-      const modeling = bpmnModeler.get('modeling');
+    
       const elementFactory = bpmnModeler.get('elementFactory');
       const canvas = bpmnModeler.get('canvas');
 
