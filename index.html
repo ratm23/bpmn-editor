@@ -69,14 +69,20 @@
 
         eventBus.on('bpmnRenderer.drawShape', ({ element, gfx }) => {
           if (element.type === 'bpmn:StartEvent' && isMultipleEvent(element)) {
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', 18);
-            circle.setAttribute('cy', 18);
-            circle.setAttribute('r', 6);
+            const ns = 'http://www.w3.org/2000/svg';
+            const circle = document.createElementNS(ns, 'circle');
+            circle.setAttribute('cx', '18');
+            circle.setAttribute('cy', '18');
+            circle.setAttribute('r', '6');
             circle.setAttribute('fill', this.EVENT_COLOR);
             circle.setAttribute('stroke', '#000');
             circle.setAttribute('stroke-width', '1');
-            gfx.appendChild(circle);
+
+            gfx.appendChild(gfx.ownerSVGElement.appendChild(circle));
+          }
+        });
+      }
+    }
           }
         });
       }
