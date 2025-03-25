@@ -51,6 +51,7 @@
     <div>
       <button id="downloadBtn">Download as .bpmn</button>
       <button id="submitBtn">Submit</button>
+      <button id="addMultipleStartEvent">+ Start (Multiple)</button>
     </div>
     <div id="submitStatus"></div>
   </div>
@@ -73,7 +74,6 @@
         }
       }
 
-      // fallback – default diagram
       const defaultDiagram = `<?xml version="1.0" encoding="UTF-8"?>
       <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                         xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -140,6 +140,23 @@
         document.getElementById('submitStatus').textContent = '❌ Submission failed. Please try again.';
         document.getElementById('submitStatus').style.color = 'red';
       }
+    });
+
+    document.getElementById('addMultipleStartEvent').addEventListener('click', () => {
+      const modeling = bpmnModeler.get('modeling');
+      const elementFactory = bpmnModeler.get('elementFactory');
+      const canvas = bpmnModeler.get('canvas');
+
+      const multipleStart = elementFactory.createShape({
+        type: 'bpmn:StartEvent',
+        businessObject: bpmnModeler.get('moddle').create('bpmn:StartEvent', {
+          eventDefinitions: [
+            bpmnModeler.get('moddle').create('bpmn:MultipleEventDefinition', {})
+          ]
+        })
+      });
+
+      modeling.createShape(multipleStart, { x: 200, y: 200 }, canvas.getRootElement());
     });
   </script>
 </body>
