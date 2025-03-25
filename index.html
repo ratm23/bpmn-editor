@@ -78,7 +78,7 @@
             circle.setAttribute('stroke', '#000');
             circle.setAttribute('stroke-width', '1');
 
-            gfx.appendChild(gfx.ownerSVGElement.appendChild(circle));
+            gfx.appendChild(circle);
           }
         });
       }
@@ -100,8 +100,9 @@
     {
       __init__: ['customRenderer'],
       customRenderer: ['type', CustomRenderer]
-    }
-  ]
+    },
+    window.BpmnJS?._modules?.[0] || {}
+  ].filter(Boolean)
 });
 
     async function loadDiagramFromURL() {
