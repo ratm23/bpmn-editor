@@ -146,19 +146,7 @@
     });
 
     
-      const elementFactory = bpmnModeler.get('elementFactory');
-      const canvas = bpmnModeler.get('canvas');
-
-      const multipleStart = elementFactory.createShape({
-        type: 'bpmn:StartEvent',
-        businessObject: bpmnModeler.get('moddle').create('bpmn:StartEvent', {
-          eventDefinitions: [
-            bpmnModeler.get('moddle').create('bpmn:MultipleEventDefinition', {})
-          ]
-        })
-      });
-
-      modeling.createShape(multipleStart, { x: 200, y: 200 }, canvas.getRootElement());
+      
     });
   </script>
 </body>
