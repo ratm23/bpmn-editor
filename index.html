@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>BPMN Editor MVP</title>
-  <script src="https://unpkg.com/bpmn-js@13.0.3/dist/bpmn-modeler.development.js">  </script>
-  
+  <script src="https://unpkg.com/bpmn-js@13.0.3/dist/bpmn-modeler.development.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/diagram-js.css" />
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/bpmn-js.css" />
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/bpmn-font/css/bpmn.css" />
@@ -52,16 +51,17 @@
     <div>
       <button id="downloadBtn">Download as .bpmn</button>
       <button id="submitBtn">Submit</button>
-      
     </div>
     <div id="submitStatus"></div>
   </div>
 
   <script>
-    
-
-    
-    const bpmnModeler = new BpmnJS({ container: '#canvas' });
+    const bpmnModeler = new BpmnJS({
+      container: '#canvas',
+      keyboard: {
+        bindTo: document
+      }
+    });
 
     async function loadDiagramFromURL() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -145,10 +145,6 @@
         document.getElementById('submitStatus').style.color = 'red';
       }
     });
-
-    
-      
-    });
-</script>
+  </script>
 </body>
 </html>
