@@ -12,10 +12,25 @@
       margin: 0;
       font-family: sans-serif;
     }
-    #canvas {
-      height: 85vh;
-      border-bottom: 1px solid #ccc;
-    }
+   #canvas {
+    height: 85vh;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    margin: 10px;
+    transition: border 0.3s ease;
+  }
+
+  .valid {
+    border-color: #28a745; /* zielony */
+  }
+
+  .invalid {
+    border-color: #dc3545; /* czerwony */
+  }
+
+  .neutral {
+    border-color: #ccc;
+  }
     #buttons {
       padding: 10px;
       display: flex;
