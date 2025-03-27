@@ -1,148 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>BPMN Editor MVP</title>
+  <meta charset="UTF-8" />
+  <title>BPMN Soundness Test</title>
   <script src="https://unpkg.com/bpmn-js@13.0.3/dist/bpmn-modeler.development.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/diagram-js.css" />
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/bpmn-js.css" />
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/bpmn-font/css/bpmn.css" />
   <style>
-    html, body {
-      height: 100%;
+    body {
       margin: 0;
-      padding: 0;
       font-family: sans-serif;
     }
     #canvas {
-      height: 90vh;
-      border: 1px solid #ccc;
+      height: 80vh;
+      border-bottom: 1px solid #ccc;
     }
     #buttons {
       padding: 10px;
-      background: #f7f7f7;
-      border-top: 1px solid #ccc;
       display: flex;
-      justify-content: space-between;
+      gap: 10px;
       align-items: center;
     }
     button {
-      margin-right: 10px;
-      padding: 8px 16px;
+      padding: 6px 16px;
       font-size: 14px;
-      border: none;
       background-color: #007bff;
       color: white;
+      border: none;
       border-radius: 4px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #submitStatus {
+    #result {
       font-size: 14px;
-      color: green;
+      margin-left: 10px;
     }
   </style>
 </head>
 <body>
+
   <div id="canvas"></div>
   <div id="buttons">
-    <div>
-      <button id="downloadBtn">Download as .bpmn</button>
-      <button id="submitBtn">Submit</button>
-    </div>
-    <div id="submitStatus"></div>
+    <button id="checkBtn">Check Soundness</button>
+    <div id="result"></div>
   </div>
 
   <script>
-    const bpmnModeler = new BpmnJS({
-      container: '#canvas',
-      keyboard: {
-        bindTo: document
-      }
-    });
+    const bpmnModeler = new BpmnJS({ container: '#canvas' });
 
-    async function loadDiagramFromURL() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const diagramName = urlParams.get('diagram');
+    const defaultDiagram = `<?xml version="1.0" encoding="UTF-8"?>
+    <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                      xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                      xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                      xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                      id="Definitions_1"
+                      targetNamespace="http://bpmn.io/schema/bpmn">
+      <bpmn:process id="Process_1" isExecutable="false">
+        <bpmn:startEvent id="StartEvent_1"/>
+        <bpmn:task id="Task_1" name="Do something"/>
+        <bpmn:endEvent id="EndEvent_1"/>
+        <bpmn:sequenceFlow id="flow1" sourceRef="StartEvent_1" targetRef="Task_1"/>
+        <bpmn:sequenceFlow id="flow2" sourceRef="Task_1" targetRef="EndEvent_1"/>
+      </bpmn:process>
+      <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+          <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+            <dc:Bounds x="100" y="100" width="36" height="36"/>
+          </bpmndi:BPMNShape>
+          <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
+            <dc:Bounds x="180" y="90" width="100" height="60"/>
+          </bpmndi:BPMNShape>
+          <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+            <dc:Bounds x="320" y="100" width="36" height="36"/>
+          </bpmndi:BPMNShape>
+        </bpmndi:BPMNPlane>
+      </bpmndi:BPMNDiagram>
+    </bpmn:definitions>`;
 
-      if (diagramName) {
-        try {
-          const response = await fetch(`./diagrams/${diagramName}.bpmn`);
-          const xml = await response.text();
-          await bpmnModeler.importXML(xml);
-          return;
-        } catch (e) {
-          console.error('Diagram loading error:', e);
+    bpmnModeler.importXML(defaultDiagram);
+
+    document.getElementById('checkBtn').addEventListener('click', async () => {
+      const resultEl = document.getElementById('result');
+      const elementRegistry = bpmnModeler.get('elementRegistry');
+      const elements = elementRegistry.getAll();
+
+      let errors = [];
+
+      const hasStart = elements.some(e => e.type === 'bpmn:StartEvent');
+      const hasEnd = elements.some(e => e.type === 'bpmn:EndEvent');
+      const flows = elements.filter(e => e.type === 'bpmn:SequenceFlow');
+
+      if (!hasStart) errors.push('Brak Start Event');
+      if (!hasEnd) errors.push('Brak End Event');
+      if (flows.length === 0) errors.push('Brak połączeń (SequenceFlow)');
+
+      const tasks = elements.filter(e => e.type === 'bpmn:Task');
+      tasks.forEach(task => {
+        const { incoming, outgoing } = task;
+        if (!incoming || incoming.length === 0 || !outgoing || outgoing.length === 0) {
+          errors.push(`Task "${task.businessObject.name || task.id}" nie ma pełnych połączeń`);
         }
-      }
+      });
 
-      const defaultDiagram = `<?xml version="1.0" encoding="UTF-8"?>
-      <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                        xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-                        xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-                        xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-                        id="Definitions_1"
-                        targetNamespace="http://bpmn.io/schema/bpmn">
-        <bpmn:process id="Process_1" isExecutable="false">
-          <bpmn:startEvent id="StartEvent_1"/>
-        </bpmn:process>
-        <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-          <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-            <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-              <dc:Bounds x="100" y="100" width="36" height="36"/>
-            </bpmndi:BPMNShape>
-          </bpmndi:BPMNPlane>
-        </bpmndi:BPMNDiagram>
-      </bpmn:definitions>`;
-
-      await bpmnModeler.importXML(defaultDiagram);
-    }
-
-    loadDiagramFromURL();
-
-    document.getElementById('downloadBtn').addEventListener('click', async () => {
-      try {
-        const { xml } = await bpmnModeler.saveXML({ format: true });
-        const blob = new Blob([xml], { type: 'application/xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'diagram.bpmn';
-        a.click();
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        console.error('Export error:', err);
-      }
-    });
-
-    document.getElementById('submitBtn').addEventListener('click', async () => {
-      try {
-        const { xml } = await bpmnModeler.saveXML({ format: true });
-        const elementRegistry = bpmnModeler.get('elementRegistry');
-        const allElements = elementRegistry.getAll();
-
-        const invalidTasks = allElements.filter(el => {
-          return el.type === 'bpmn:Task' && el.businessObject.name && el.businessObject.name.length > 5;
-        });
-
-        if (invalidTasks.length > 0) {
-          const names = invalidTasks.map(t => t.businessObject.name).join(', ');
-          document.getElementById('submitStatus').textContent =
-            `❌ Validation failed: Task name(s) too long (${names})`;
-          document.getElementById('submitStatus').style.color = 'red';
-          return;
-        }
-
-        document.getElementById('submitStatus').textContent = '✅ Diagram submitted successfully!';
-        document.getElementById('submitStatus').style.color = 'green';
-
-      } catch (err) {
-        console.error('Submit error:', err);
-        document.getElementById('submitStatus').textContent = '❌ Submission failed. Please try again.';
-        document.getElementById('submitStatus').style.color = 'red';
+      if (errors.length === 0) {
+        resultEl.textContent = '✅ Diagram jest sound';
+        resultEl.style.color = 'green';
+      } else {
+        resultEl.textContent = '❌ ' + errors.join('; ');
+        resultEl.style.color = 'red';
       }
     });
   </script>
