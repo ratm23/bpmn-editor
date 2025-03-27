@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BPMN Soundness Test</title>
+  <title>BPMN Editor with Soundness</title>
   <script src="https://unpkg.com/bpmn-js@13.0.3/dist/bpmn-modeler.development.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/diagram-js.css" />
   <link rel="stylesheet" href="https://unpkg.com/bpmn-js@13.0.3/dist/assets/bpmn-js.css" />
@@ -13,7 +13,7 @@
       font-family: sans-serif;
     }
     #canvas {
-      height: 80vh;
+      height: 85vh;
       border-bottom: 1px solid #ccc;
     }
     #buttons {
@@ -48,37 +48,21 @@
   <script>
     const bpmnModeler = new BpmnJS({ container: '#canvas' });
 
-    const defaultDiagram = `<?xml version="1.0" encoding="UTF-8"?>
-    <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                      xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                      xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-                      xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-                      xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-                      id="Definitions_1"
-                      targetNamespace="http://bpmn.io/schema/bpmn">
-      <bpmn:process id="Process_1" isExecutable="false">
-        <bpmn:startEvent id="StartEvent_1"/>
-        <bpmn:task id="Task_1" name="Do something"/>
-        <bpmn:endEvent id="EndEvent_1"/>
-        <bpmn:sequenceFlow id="flow1" sourceRef="StartEvent_1" targetRef="Task_1"/>
-        <bpmn:sequenceFlow id="flow2" sourceRef="Task_1" targetRef="EndEvent_1"/>
-      </bpmn:process>
-      <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
-          <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-            <dc:Bounds x="100" y="100" width="36" height="36"/>
-          </bpmndi:BPMNShape>
-          <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1">
-            <dc:Bounds x="180" y="90" width="100" height="60"/>
-          </bpmndi:BPMNShape>
-          <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-            <dc:Bounds x="320" y="100" width="36" height="36"/>
-          </bpmndi:BPMNShape>
-        </bpmndi:BPMNPlane>
-      </bpmndi:BPMNDiagram>
-    </bpmn:definitions>`;
+    async function loadDiagramFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const diagramName = urlParams.get('diagram') || 'default';
 
-    bpmnModeler.importXML(defaultDiagram);
+      try {
+        const response = await fetch(`./diagrams/${diagramName}.bpmn`);
+        const xml = await response.text();
+        await bpmnModeler.importXML(xml);
+      } catch (e) {
+        console.error('Diagram loading error:', e);
+        document.getElementById('result').textContent = '❌ Błąd ładowania diagramu';
+      }
+    }
+
+    loadDiagramFromURL();
 
     document.getElementById('checkBtn').addEventListener('click', async () => {
       const resultEl = document.getElementById('result');
@@ -93,18 +77,18 @@
 
       if (!hasStart) errors.push('Brak Start Event');
       if (!hasEnd) errors.push('Brak End Event');
-      if (flows.length === 0) errors.push('Brak połączeń (SequenceFlow)');
+      if (flows.length === 0) errors.push('Brak SequenceFlow');
 
       const tasks = elements.filter(e => e.type === 'bpmn:Task');
       tasks.forEach(task => {
         const { incoming, outgoing } = task;
         if (!incoming || incoming.length === 0 || !outgoing || outgoing.length === 0) {
-          errors.push(`Task "${task.businessObject.name || task.id}" nie ma pełnych połączeń`);
+          errors.push(`Task "${task.businessObject.name || task.id}" bez pełnych połączeń`);
         }
       });
 
       if (errors.length === 0) {
-        resultEl.textContent = '✅ Diagram jest sound';
+        resultEl.textContent = '✅ Diagram sound';
         resultEl.style.color = 'green';
       } else {
         resultEl.textContent = '❌ ' + errors.join('; ');
